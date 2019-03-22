@@ -25,13 +25,123 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        lastTime;
+        lastTime,
+        levelEndTime,
+        gameToastTime;
+        
+        var toast = {
+            msg: "0",
+            row: 0,
+            col: 0,
+        };
 
-    canvas.width = 505;
-    canvas.height = 606;
+
+    canvas.width = 707;
+    canvas.height = 760;
     doc.body.appendChild(canvas);
 
-    /* Esta função age como o ponto de largada do loop do jogo em si e
+
+  /* Esta função faz algumas configurações iniciais que só devem ocorrer
+     * uma vez, especialmente a definição da variável lastTime, que é
+     * exigida para o loop do jogo.
+     */
+    function init() {
+        reset();
+        lastTime = Date.now();
+        
+        // Selecao de personagem
+        playerSelection();
+
+    }
+
+        /* Esta função não faz nada, mas pode ser um bom local para lidar com os
+     * estados de reinicialização do jogo - talvez, um novo menu de jogo, uma
+     * tela de fim de jogo ou coisas assim. É chamada só uma vez pelo
+     * método init().
+     */
+    function reset() {
+       game.reset();
+       player.reset();
+       allEnemies = [];
+       for(var i = 0 ; i < 4 ; i++) {
+        allEnemies.push(new Enemy());
+        }
+    }
+
+    
+
+    // Escolha de personagem !! 
+     
+    function playerSelection() {  
+        var characters = [  'images/char-boy.png',
+                            'images/char-cat-girl.png',
+                            'images/char-horn-girl.png',
+                            'images/char-pink-girl.png',
+                            'images/char-princess-girl.png'
+                            ];
+        var selector = {
+            sprite: 'images/Selector.png',
+            row: 3,
+            col: 1
+        };       
+        
+        /* Mostra o seletor e os personagens disponiveis */    
+        displaySelectionWindow(characters, selector);
+
+        /* Usando as teclas do teclado para mover e escolher. */
+        document.addEventListener('keyup', function(e) {
+            
+            if (e.keyCode === 37 && selector.col > 1) {
+                selector.col -= 1;
+                displaySelectionWindow(characters, selector);
+            } else if (e.keyCode === 39 && selector.col < 5) {
+            
+                selector.col += 1;
+                displaySelectionWindow(characters, selector);
+            } else if (e.keyCode === 13) {
+            
+                player.sprite = characters[selector.col - 1];
+                player.reset();
+                levelEndTime = Date.now();
+                main();
+            }
+        });
+    }
+
+
+
+    // Colocando o personagem escolhido dentro do jogo !!
+    function displaySelectionWindow(characters, selector) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "gray";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.font = "50pt impact";
+        ctx.textAlign = "center";
+
+        ctx.fillStyle = "white";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+
+        var line = "Escolha o Personagem";
+
+        ctx.fillText(line, canvas.width/2, canvas.height/2 - 120);
+        ctx.strokeText(line, canvas.width/2, canvas.height/2 - 120);
+
+        line = "Aperte Enter";
+        ctx.fillText(line, canvas.width/2, canvas.height/2 + 150);
+        ctx.strokeText(line, canvas.width/2, canvas.height/2 + 150);
+
+       
+        ctx.drawImage(Resources.get(selector.sprite), selector.col * 101, selector.row * 83 + 20);
+
+        for (var i = 1 ; i < 6 ; i++) {
+            ctx.drawImage(Resources.get(characters[i-1]), i * 101, 3 * 83);
+        }
+    }
+
+   /* Esta função age como o ponto de largada do loop do jogo em si e
      * lida com as chamadas dos métodos render e update de forma adequada.
      */
     function main() {
@@ -45,31 +155,149 @@ var Engine = (function(global) {
         var now = Date.now(),
             dt = (now - lastTime) / 1000.0;
 
+
+            if(game.currentLevel === 11) {
+                displayEnding();
+            } else if (game.life === 0) {
+                playerDead();
+            } else {
+                if(game.loading) {
+                    waitLevelLoading();
+                } else {
         /* Chame suas funções update/render e passe o delta de tempo para a
          * função update, pois ele pode ser usado para melhorar a animação.
          */
-        update(dt);
-        render();
+                    update(dt);
+                    render();
+
+
+                if (game.toast) {
+                    toastMessage();
+                 }
+
+             }
+
+
 
         /* Defina a variável lastTime, que será usada para definir o delta
          * de tempo na próxima vez em que essa função for chamada.
          */
         lastTime = now;
 
+
         /* Use a função requestAnimationFrame do navegador para chamar essa
          * função novamente quando o navegador puder desenhar outro frame.
          */
         win.requestAnimationFrame(main);
+            }
+
+    } // FINAL DO MAIN
+
+    
+    // Criando o final do jogo e Recomecar o jogo
+
+    function displayEnding() {
+        ctx.fillStyle = "grey";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, canvas.height/3, canvas.width, canvas.height/3);
+
+        ctx.font = "50pt impact";
+        ctx.textAlign = "center";
+
+        ctx.fillStyle = "white";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+
+        var line = "Parabens !";
+        ctx.fillText(line, canvas.width/2, canvas.height/3 - 40);
+        ctx.strokeText(line, canvas.width/2, canvas.height/3 - 40);
+
+        ctx.fillStyle = "grey";
+        ctx.font = "50pt impact";
+        
+        line = "Sua pontuacao : " + game.score;
+        ctx.fillText(line, canvas.width/2, canvas.height/3 + 80);
+        line = "Level : 10";
+        ctx.fillText(line, canvas.width/2, canvas.height/3 + 160);
+        line = "Espaco para Recomecar";
+        ctx.fillText(line, canvas.width/2, canvas.height/3 + 240);
+
+        document.addEventListener('keyup', function(e) {
+            if (e.keyCode === 32) {
+                init();
+            }
+        });
     }
 
-    /* Esta função faz algumas configurações iniciais que só devem ocorrer
-     * uma vez, especialmente a definição da variável lastTime, que é
-     * exigida para o loop do jogo.
-     */
-    function init() {
-        reset();
-        lastTime = Date.now();
-        main();
+    
+    // Verifica se o jogador morreu e reinicia
+    function playerDead() {
+        ctx.fillStyle = "grey";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, canvas.height/3, canvas.width, canvas.height/3);
+
+        ctx.font = "100pt impact";
+        ctx.textAlign = "center";
+
+        ctx.fillStyle = "white";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+
+        var line = "Fim de Jogo";
+        ctx.fillText(line, canvas.width/2, canvas.height/3 - 40);
+        ctx.strokeText(line, canvas.width/2, canvas.height/3 - 40);
+
+        ctx.fillStyle = "grey";
+        ctx.font = "50pt impact";
+        
+        line = "Pontuacao : " + game.score;
+        ctx.fillText(line, canvas.width/2, canvas.height/3 + 80);
+        line = "Level : " + game.currentLevel;
+        ctx.fillText(line, canvas.width/2, canvas.height/3 + 160);
+        line = "Espaco para Recomecar";
+        ctx.fillText(line, canvas.width/2, canvas.height/3 + 240);
+
+        document.addEventListener('keyup', function(e) {
+            if (e.keyCode === 32) {
+                init();
+            }
+        });
+    }
+
+     //Aguarda 2 segundos apos completar uma fase e inicia a proxima
+    function waitLevelLoading() {
+        if(Date.now() - levelEndTime < 2000) {
+            displayLevelLoading();
+        } else {
+            game.nextLevelInitiation();
+            heart.reset();
+        }
+    }
+
+    
+
+    // Carregamento de tela
+    function displayLevelLoading() {
+        ctx.fillStyle = "grey";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, canvas.height/3, canvas.width, canvas.height/3);
+
+        ctx.font = "60pt impact";
+        ctx.textAlign = "center";
+
+        ctx.fillStyle = "white";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+
+        var levelLine = "Level "+ game.currentLevel;
+        ctx.fillText(levelLine, canvas.width/2, canvas.height/2 + 50);
+        ctx.strokeText(levelLine, canvas.width/2, canvas.height/2 + 50);
     }
 
     /* Esta função é chamada pela principal (o loop de nosso jogo), e ela
@@ -84,9 +312,48 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        // Verifica a colisao do jogo
+        checkCollisions();
+
+        if(game.gemCount !== game.currentLevel) {
+            if (gem.checkGet(game, player)) {
+                game.gemCount += 1;
+                setToast("+15", player.row, player.col);
+            }
+        } else {
+            if (key.checkGet(game, player)) {
+                setToast("+25", player.row, player.col);
+                game.loading = true;
+                game.currentLevel += 1;
+                levelEndTime = Date.now();
+            }
+        }
+
+        if (heart.present) {
+            if (heart.checkGet(game, player)) {
+                setToast("+20", player.row, player.col);
+                game.life += 1;
+                heart.present = false;
+            }
+        } else {
+            heart.generate(game.currentLevel);
+        }
+ 
     }
 
+    function checkCollisions() {
+        if (game.board[player.row][player.col] === 2) {
+            setToast("Ouch -30", player.row, player.col);
+            game.playerDead();
+        } else {
+            allEnemies.forEach(function(enemy) {
+                if(player.row === enemy.row && player.col - 0.7 < enemy.col && player.col + 0.7 > enemy.col) {
+                    setToast("Ouch -30", player.row, player.col);
+                    game.playerDead();
+                }
+            });
+        }
+    }
     /* É chamada pela função update, faz loops por todos os objetos dentro
      * de sua array allEnemies, como definido no app.js, e chama
      * seus métodos update(). Então, chama a função update do objeto de
@@ -98,95 +365,92 @@ var Engine = (function(global) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
         });
-        player.update();
     }
 
-    /* Esta função primeiro deseha o "nível do jogo" e, depois, chama a
-     * função renderEntities. Lembre-se de que esta função é chamada a
-     * cada "tique" do jogo (ou loop do mecanismo do jogo), pois é como os
-     * jogos funionam - são folioscópios que geram a ilusão de animação,
-     * mas estão apenas desenhando a mesma tela várias vezes.
+// Seta a mensagem para ser exibida
+    function setToast(msg, row, col) {
+        toast.msg = msg;
+        toast.row = row;
+        toast.col = col;
+        game.toast = true;
+        gameToastTime = Date.now();
+    }
+    /* This function initially draws the "game level", it will then call
+     * the renderEntities function. Remember, this function is called every
+     * game tick (or loop of the game engine) because that's how games work -
+     * they are flipbooks creating the illusion of animation but in reality
+     * they are just drawing the entire screen over and over.
      */
     function render() {
-        /* Esta array armazena a URL relativa à imagem usada
-         * para aquela linha específica do nível do jogo.
-         */
-        var rowImages = [
-                'images/water-block.png',   // Top row is water
-                'images/stone-block.png',   // Row 1 of 3 of stone
-                'images/stone-block.png',   // Row 2 of 3 of stone
-                'images/stone-block.png',   // Row 3 of 3 of stone
-                'images/grass-block.png',   // Row 1 of 2 of grass
-                'images/grass-block.png'    // Row 2 of 2 of grass
-            ],
-            numRows = 6,
-            numCols = 5,
-            row, col;
-        
-        // Antes de fazer os desenhos, limpe os canvas existentes
-        ctx.clearRect(0,0,canvas.width,canvas.height)
-
-        /* Faça o loop pelo número de linhas e colunas que definimos acima
-         * e, usando a array rowImages, desenhe a imagem correta para
-         * aquela parte da "grade"
-         */
-        for (row = 0; row < numRows; row++) {
-            for (col = 0; col < numCols; col++) {
-                /* A função drawImage do elemento do contexto do canvas
-                 * exige 3 parâmetros: a imagem, a coordenada x e a 
-                 * coordenada y a serem desenhadas. Estamos usando nossa 
-                 * ajuda, dos recursos, para nos referirmos às imagens
-                 * de forma a obtermos os benefícios de fazer seu cache,
-                 * já que as usamos o tempo todo.
-                 */
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
-            }
-        }
-
+        game.renderBoard();
         renderEntities();
     }
 
-    /* Esta função é chamada pela função render, e isso ocorre a cada tique
-     * do jogo. Seu propósito é chamar as funções render que você definiu
-     * nas entidades de seu jogador e seus inimigos dentro do app.js
+    /* This function is called by the render function and is called on each game
+     * tick. It's purpose is to then call the render functions you have defined
+     * on your enemy and player entities within app.js
      */
     function renderEntities() {
-        /* Faça o loop por todos os objetos dentro da array allEnemies
-         * e chame a função render que você definiu.
-         */
+        
+       
+        if (game.gemCount != game.currentLevel){
+            gem.render();
+        } else {
+            key.render();
+        }
+
+        if (heart.present) {
+            heart.render();
+        }
+
+      
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
 
+        
         player.render();
     }
 
-    /* Esta função não faz nada, mas pode ser um bom local para lidar com os
-     * estados de reinicialização do jogo - talvez, um novo menu de jogo, uma
-     * tela de fim de jogo ou coisas assim. É chamada só uma vez pelo
-     * método init().
-     */
-    function reset() {
-        // noop
-    }
+    //Apresenta a mensagem
+    function toastMessage() {
+        if (Date.now() - gameToastTime < 1000) {
+            ctx.font = "20pt impact";
+            ctx.textAlign = "center";
+            
+            ctx.fillStyle = "red";
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 1;
 
-    /* Vá em frente e carregue todas as imagens que sabemos que serão
-     * necessárias para desenhar o nível do jogo. Depois, defina init como o
-     * método de callback para que, quando todas essas imagens forem
-     * adequadamente carregadas, nosso jogo comece.
-     */
+            ctx.fillText(toast.msg, toast.col * 101 + 50, toast.row * 83 + 100);
+            ctx.strokeText(toast.msg, toast.col * 101 + 50, toast.row * 83 + 100);
+        } else {
+            game.toast = false;
+        }
+    }    
+
+    // Recarrega as imagens do jogo
     Resources.load([
         'images/stone-block.png',
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-boy.png'
+        'images/char-boy.png',
+        'images/char-cat-girl.png',
+        'images/char-horn-girl.png',
+        'images/char-pink-girl.png',
+        'images/char-princess-girl.png',
+        'images/Selector.png',
+        'images/gem-orange.png',
+        'images/Key.png',
+        'images/Heart.png'
     ]);
     Resources.onReady(init);
 
-    /* Aloque o objeto context do canvas na variável global (o objeto
-     * window quando executado em um navegador) para que desenvolvedores
-     * possam usá-lo com mais facilidade em seus arquivos app.js.
+    /* Assign the canvas and canvas' context object to the global variable (the window
+     * object when run in a browser) so that developer's can use them more easily
+     * from within their app.js files.
      */
     global.ctx = ctx;
+    global.canvas = canvas;
 })(this);

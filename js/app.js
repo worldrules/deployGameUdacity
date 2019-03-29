@@ -1,16 +1,31 @@
-'use strict'
+"use strict";
 // Predefined variables that will be used to define different objects.
 var NUM_ROWS = 8; // Number of rows on the board
 var NUM_COLS = 7; // Number of columns on the board
 
 // Array of possible speed of enemies
-var enemySpeed = [1, 1.3, 1.6, 1.9, 2.2, 2.5, 2.8, 3.1, 3.4, 3.7, 4.0, 4.2, 4.4, 4.6];
+var enemySpeed = [
+    1,
+    1.3,
+    1.6,
+    1.9,
+    2.2,
+    2.5,
+    2.8,
+    3.1,
+    3.4,
+    3.7,
+    4.0,
+    4.2,
+    4.4,
+    4.6
+];
 
 // Array that stores three different types of blocks to draw the board
 var boardImg = [
-    'images/grass-block.png',
-    'images/stone-block.png',
-    'images/water-block.png'
+    "images/grass-block.png",
+    "images/stone-block.png",
+    "images/water-block.png"
 ];
 
 // This function generates a random integer numbers between min and max (inclusive).
@@ -56,6 +71,14 @@ var Game = function () {
     this.life = 3;
     this.score = 0;
     this.toast = false;
+
+    Game.prototype.resetGame = function (heart, gem, key, player) {
+        heart.reset();
+        //Reseta as gemas , a chave , e o player;
+        gem.reset();
+        key.reset();
+        player.reset();
+    }
 };
 
 // Reset all the variables associated with Game object upon restart of the game
@@ -70,7 +93,7 @@ Game.prototype.reset = function () {
 };
 
 // Draws board on the canvas according to the this.board array
-Game.prototype.renderBoard = function () {
+Game.prototype.renderBoard = function (ctx) {
     ctx.fillStyle = "grey";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -83,7 +106,7 @@ Game.prototype.renderBoard = function () {
 
     // Draws number of life left
     for (var i = 0; i < this.life; i++) {
-        ctx.drawImage(Resources.get('images/Heart.png'), i * 45 + 10, 0, 40, 45);
+        ctx.drawImage(Resources.get("images/Heart.png"), i * 45 + 10, 0, 40, 45);
     }
 
     ctx.font = "20pt impact";
@@ -99,7 +122,7 @@ Game.prototype.renderBoard = function () {
     ctx.strokeText(line, 580, 35);
 
     // Displays the number of gems left to collect to clear the level
-    line = (this.currentLevel - this.gemCount) + " Gem Left";
+    line = this.currentLevel - this.gemCount + " Gem Left";
     ctx.fillText(line, 295, 35);
     ctx.strokeText(line, 295, 35);
 };
@@ -177,7 +200,7 @@ var Enemy = function () {
     // Construct an enemy with variables that inherits from GameObject
     // by calling .call with appropriate image, row number that is randomly
     // generated between 2 and 5 and column number of -1
-    GameObject.call(this, 'images/enemy-bug.png', randomGenerator(2, 5), -1);
+    GameObject.call(this, "images/enemy-bug.png", randomGenerator(2, 5), -1);
 
     // speed is unique to enemy only. randomly generate speed from the enemySpeed array
     this.speed = enemySpeed[randomGenerator(0, 4 + game.currentLevel)];
@@ -192,7 +215,7 @@ Enemy.prototype.update = function (dt) {
     // You should multiply any movement by the dt parameter
     // which will ensure the game runs at the same speed for
     // all computers.
-    this.col = this.col + (this.speed * dt);
+    this.col = this.col + this.speed * dt;
 
     // If the enemy reaches the end of the board, reset its position by calling .reset()
     if (this.col > 7) {
@@ -211,7 +234,7 @@ Enemy.prototype.reset = function () {
 // by calling .call with appropriate image, row number and column number.
 // Superclass: GameObject
 var Player = function () {
-    GameObject.call(this, 'images/char-boy.png', 7, 3);
+    GameObject.call(this, "images/char-boy.png", 7, 3);
 };
 
 // Player inherits methods (render) from GameObject
@@ -227,29 +250,25 @@ Player.prototype.reset = function () {
 // param: ctrKey
 Player.prototype.handleInput = function (ctrKey) {
     switch (ctrKey) {
-        case 'left':
+        case "left":
             // If user press the left key, move the player one column to the left unless
             // the player is at the leftmost column.
-            if (this.col > 0)
-                this.col -= 1;
+            if (this.col > 0) this.col -= 1;
             break;
-        case 'right':
+        case "right":
             // If user press the right key, move the player one column to the right unless
             // the player is at the rightmost column.
-            if (this.col < 6)
-                this.col += 1;
+            if (this.col < 6) this.col += 1;
             break;
-        case 'up':
+        case "up":
             // If user press the up key, move the player one row up unless
             // the player is at the top row.
-            if (this.row > 0)
-                this.row -= 1;
+            if (this.row > 0) this.row -= 1;
             break;
-        case 'down':
+        case "down":
             // If user press the down key, move the player one row down unless
             // the player is at the bottom row.
-            if (this.row < 7)
-                this.row += 1;
+            if (this.row < 7) this.row += 1;
             break;
     }
 };
@@ -284,7 +303,7 @@ GameStaticObject.prototype.reset = function () {
 };
 
 // Check if the player collected the GameStaticObject. If so, increase the total score
-// by the scoreValue of the object and reset the position of the object. 
+// by the scoreValue of the object and reset the position of the object.
 // Then, return true. Otherwise, return false.
 // param: game, player
 GameStaticObject.prototype.checkGet = function (game, player) {
@@ -301,7 +320,7 @@ GameStaticObject.prototype.checkGet = function (game, player) {
 // by calling .call with appropriate image and score value of 15 for the gem.
 // Superclass: GameStaticObject
 var Gem = function () {
-    GameStaticObject.call(this, 'images/gem-orange.png', 15);
+    GameStaticObject.call(this, "images/gem-orange.png", 15);
 };
 
 // Gem inherits methods (reset) from GameStaticObject.
@@ -313,7 +332,7 @@ Gem.inheritsFrom(GameStaticObject);
 // by calling .call with appropriate image and score value of 20 for the Key.
 // Superclass: GameStaticObject
 var Key = function () {
-    GameStaticObject.call(this, 'images/Key.png', 25);
+    GameStaticObject.call(this, "images/Key.png", 25);
 };
 
 // Key inherits methods (reset) from GameStaticObject.
@@ -325,7 +344,7 @@ Key.inheritsFrom(GameStaticObject);
 // by calling .call with appropriate image and score value of 15 for the Heart.
 // Superclass: GameStaticObject
 var Heart = function () {
-    GameStaticObject.call(this, 'images/Heart.png', 20);
+    GameStaticObject.call(this, "images/Heart.png", 20);
 
     // As Heart object is a temporary object, that will be randomly chosen to appear
     // on the board, it has its unique property called present. As a default,
@@ -343,7 +362,7 @@ Heart.inheritsFrom(GameStaticObject);
 Heart.prototype.generate = function (level) {
     // As the game level increases, the Heart object will appear more often on the
     // screen. If the player has 6 lives left, no more heart will be generated.
-    if (randomGenerator(0, (14 - level) / 4 * 1200) === 0 && game.life < 6) {
+    if (randomGenerator(0, ((14 - level) / 4) * 1200) === 0 && game.life < 6) {
         this.present = true;
     } else {
         this.present = false;
@@ -365,20 +384,24 @@ for (var i = 0; i < 4; i++) {
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
-document.addEventListener('keyup', function (e) {
+document.addEventListener("keyup", function (e) {
     var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
+        37: "left",
+        38: "up",
+        39: "right",
+        40: "down"
     };
 
     player.handleInput(allowedKeys[e.keyCode]);
 });
 
 // This disables the original functionalities of some keyboard keys(left, up, right, down, enter).
-document.addEventListener('keydown', function (e) {
-    if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
-        e.preventDefault();
-    }
-}, false);
+document.addEventListener(
+    "keydown",
+    function (e) {
+        if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+            e.preventDefault();
+        }
+    },
+    false
+);

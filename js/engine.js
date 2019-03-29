@@ -274,11 +274,7 @@ var Engine = (function (global) {
             displayLevelLoading();
         } else {
             game.nextLevelInitiation(allEnemies, gem, key, player);
-            heart.reset();
-            //Reseta as gemas , a chave , e o player;
-            gem.reset();
-            key.reset();
-            player.reset();
+            game.resetGame(this.heart, this.gem, this.key, this.player)
             // Adiciona um ou mais inimigos
             allEnemies.push(new Enemy);
         }
@@ -390,7 +386,7 @@ var Engine = (function (global) {
      * they are just drawing the entire screen over and over.
      */
     function render() {
-        game.renderBoard();
+        game.renderBoard(ctx);
         renderEntities();
     }
 

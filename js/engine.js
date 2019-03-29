@@ -15,7 +15,7 @@
  * do canvas, a fim de escrever app.js mais simples de lidar.
  */
 
-var Engine = (function(global) {
+var Engine = (function (global) {
     /* Pré-defina as variáveis que usaremos neste escopo,
      * crie o elemento canvas, pegue o contexto 2D desse
      * canvas, configure a altura/largura dos elementos do
@@ -28,12 +28,12 @@ var Engine = (function(global) {
         lastTime,
         levelEndTime,
         gameToastTime;
-        
-        var toast = {
-            msg: "0",
-            row: 0,
-            col: 0,
-        };
+
+    var toast = {
+        msg: "0",
+        row: 0,
+        col: 0,
+    };
 
 
     canvas.width = 707;
@@ -41,65 +41,65 @@ var Engine = (function(global) {
     doc.body.appendChild(canvas);
 
 
-  /* Esta função faz algumas configurações iniciais que só devem ocorrer
+    /* Esta função faz algumas configurações iniciais que só devem ocorrer
      * uma vez, especialmente a definição da variável lastTime, que é
      * exigida para o loop do jogo.
      */
     function init() {
         reset();
         lastTime = Date.now();
-        
+
         // Selecao de personagem
         playerSelection();
 
     }
 
-        /* Esta função não faz nada, mas pode ser um bom local para lidar com os
+    /* Esta função não faz nada, mas pode ser um bom local para lidar com os
      * estados de reinicialização do jogo - talvez, um novo menu de jogo, uma
      * tela de fim de jogo ou coisas assim. É chamada só uma vez pelo
      * método init().
      */
     function reset() {
-       game.reset();
-       player.reset();
-       allEnemies = [];
-       for(var i = 0 ; i < 4 ; i++) {
-        allEnemies.push(new Enemy());
+        game.reset();
+        player.reset();
+        allEnemies = [];
+        for (var i = 0; i < 4; i++) {
+            allEnemies.push(new Enemy());
         }
     }
 
-    
+
 
     // Escolha de personagem !! 
-     
-    function playerSelection() {  
-        var characters = [  'images/char-boy.png',
-                            'images/char-cat-girl.png',
-                            'images/char-horn-girl.png',
-                            'images/char-pink-girl.png',
-                            'images/char-princess-girl.png'
-                            ];
+
+    function playerSelection() {
+        var characters = ['images/char-boy.png',
+            'images/char-cat-girl.png',
+            'images/char-horn-girl.png',
+            'images/char-pink-girl.png',
+            'images/char-princess-girl.png'
+        ];
         var selector = {
             sprite: 'images/Selector.png',
             row: 3,
             col: 1
-        };       
-        
-        /* Mostra o seletor e os personagens disponiveis */    
+        };
+
+        /* Mostra o seletor e os personagens disponiveis */
         displaySelectionWindow(characters, selector);
 
         /* Usando as teclas do teclado para mover e escolher. */
-        document.addEventListener('keyup', function(e) {
-            
+        document.addEventListener('keyup', function (e) {
+
             if (e.keyCode === 37 && selector.col > 1) {
                 selector.col -= 1;
                 displaySelectionWindow(characters, selector);
             } else if (e.keyCode === 39 && selector.col < 5) {
-            
+
                 selector.col += 1;
                 displaySelectionWindow(characters, selector);
             } else if (e.keyCode === 13) {
-            
+
                 player.sprite = characters[selector.col - 1];
                 player.reset();
                 levelEndTime = Date.now();
@@ -126,22 +126,22 @@ var Engine = (function(global) {
 
         var line = "Escolha o Personagem";
 
-        ctx.fillText(line, canvas.width/2, canvas.height/2 - 120);
-        ctx.strokeText(line, canvas.width/2, canvas.height/2 - 120);
+        ctx.fillText(line, canvas.width / 2, canvas.height / 2 - 120);
+        ctx.strokeText(line, canvas.width / 2, canvas.height / 2 - 120);
 
         line = "Aperte Enter";
-        ctx.fillText(line, canvas.width/2, canvas.height/2 + 150);
-        ctx.strokeText(line, canvas.width/2, canvas.height/2 + 150);
+        ctx.fillText(line, canvas.width / 2, canvas.height / 2 + 150);
+        ctx.strokeText(line, canvas.width / 2, canvas.height / 2 + 150);
 
-       
+
         ctx.drawImage(Resources.get(selector.sprite), selector.col * 101, selector.row * 83 + 20);
 
-        for (var i = 1 ; i < 6 ; i++) {
-            ctx.drawImage(Resources.get(characters[i-1]), i * 101, 3 * 83);
+        for (var i = 1; i < 6; i++) {
+            ctx.drawImage(Resources.get(characters[i - 1]), i * 101, 3 * 83);
         }
     }
 
-   /* Esta função age como o ponto de largada do loop do jogo em si e
+    /* Esta função age como o ponto de largada do loop do jogo em si e
      * lida com as chamadas dos métodos render e update de forma adequada.
      */
     function main() {
@@ -156,44 +156,44 @@ var Engine = (function(global) {
             dt = (now - lastTime) / 1000.0;
 
 
-            if(game.currentLevel === 11) {
-                displayEnding();
-            } else if (game.life === 0) {
-                playerDead();
+        if (game.currentLevel === 11) {
+            displayEnding();
+        } else if (game.life === 0) {
+            playerDead();
+        } else {
+            if (game.loading) {
+                waitLevelLoading();
             } else {
-                if(game.loading) {
-                    waitLevelLoading();
-                } else {
-        /* Chame suas funções update/render e passe o delta de tempo para a
-         * função update, pois ele pode ser usado para melhorar a animação.
-         */
-                    update(dt);
-                    render();
+                /* Chame suas funções update/render e passe o delta de tempo para a
+                 * função update, pois ele pode ser usado para melhorar a animação.
+                 */
+                update(dt);
+                render();
 
 
                 if (game.toast) {
                     toastMessage();
-                 }
+                }
 
-             }
-
-
-
-        /* Defina a variável lastTime, que será usada para definir o delta
-         * de tempo na próxima vez em que essa função for chamada.
-         */
-        lastTime = now;
-
-
-        /* Use a função requestAnimationFrame do navegador para chamar essa
-         * função novamente quando o navegador puder desenhar outro frame.
-         */
-        win.requestAnimationFrame(main);
             }
+
+
+
+            /* Defina a variável lastTime, que será usada para definir o delta
+             * de tempo na próxima vez em que essa função for chamada.
+             */
+            lastTime = now;
+
+
+            /* Use a função requestAnimationFrame do navegador para chamar essa
+             * função novamente quando o navegador puder desenhar outro frame.
+             */
+            win.requestAnimationFrame(main);
+        }
 
     } // FINAL DO MAIN
 
-    
+
     // Criando o final do jogo e Recomecar o jogo
 
     function displayEnding() {
@@ -201,7 +201,7 @@ var Engine = (function(global) {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "white";
-        ctx.fillRect(0, canvas.height/3, canvas.width, canvas.height/3);
+        ctx.fillRect(0, canvas.height / 3, canvas.width, canvas.height / 3);
 
         ctx.font = "50pt impact";
         ctx.textAlign = "center";
@@ -211,34 +211,34 @@ var Engine = (function(global) {
         ctx.lineWidth = 3;
 
         var line = "Parabens !";
-        ctx.fillText(line, canvas.width/2, canvas.height/3 - 40);
-        ctx.strokeText(line, canvas.width/2, canvas.height/3 - 40);
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 - 40);
+        ctx.strokeText(line, canvas.width / 2, canvas.height / 3 - 40);
 
         ctx.fillStyle = "grey";
         ctx.font = "50pt impact";
-        
-        line = "Sua pontuacao : " + game.score;
-        ctx.fillText(line, canvas.width/2, canvas.height/3 + 80);
-        line = "Level : 10";
-        ctx.fillText(line, canvas.width/2, canvas.height/3 + 160);
-        line = "Espaco para Recomecar";
-        ctx.fillText(line, canvas.width/2, canvas.height/3 + 240);
 
-        document.addEventListener('keyup', function(e) {
+        line = "Sua pontuacao : " + game.score;
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 + 80);
+        line = "Level : 10";
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 + 160);
+        line = "Espaco para Recomecar";
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 + 240);
+
+        document.addEventListener('keyup', function (e) {
             if (e.keyCode === 32) {
                 init();
             }
         });
     }
 
-    
+
     // Verifica se o jogador morreu e reinicia
     function playerDead() {
         ctx.fillStyle = "grey";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "white";
-        ctx.fillRect(0, canvas.height/3, canvas.width, canvas.height/3);
+        ctx.fillRect(0, canvas.height / 3, canvas.width, canvas.height / 3);
 
         ctx.font = "100pt impact";
         ctx.textAlign = "center";
@@ -248,37 +248,43 @@ var Engine = (function(global) {
         ctx.lineWidth = 3;
 
         var line = "Fim de Jogo";
-        ctx.fillText(line, canvas.width/2, canvas.height/3 - 40);
-        ctx.strokeText(line, canvas.width/2, canvas.height/3 - 40);
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 - 40);
+        ctx.strokeText(line, canvas.width / 2, canvas.height / 3 - 40);
 
         ctx.fillStyle = "grey";
         ctx.font = "50pt impact";
-        
-        line = "Pontuacao : " + game.score;
-        ctx.fillText(line, canvas.width/2, canvas.height/3 + 80);
-        line = "Level : " + game.currentLevel;
-        ctx.fillText(line, canvas.width/2, canvas.height/3 + 160);
-        line = "Espaco para Recomecar";
-        ctx.fillText(line, canvas.width/2, canvas.height/3 + 240);
 
-        document.addEventListener('keyup', function(e) {
+        line = "Pontuacao : " + game.score;
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 + 80);
+        line = "Level : " + game.currentLevel;
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 + 160);
+        line = "Espaco para Recomecar";
+        ctx.fillText(line, canvas.width / 2, canvas.height / 3 + 240);
+
+        document.addEventListener('keyup', function (e) {
             if (e.keyCode === 32) {
                 init();
             }
         });
     }
 
-     //Aguarda 2 segundos apos completar uma fase e inicia a proxima
+    //Aguarda 2 segundos apos completar uma fase e inicia a proxima
     function waitLevelLoading() {
-        if(Date.now() - levelEndTime < 2000) {
+        if (Date.now() - levelEndTime < 2000) {
             displayLevelLoading();
         } else {
-            game.nextLevelInitiation();
+            game.nextLevelInitiation(allEnemies, gem, key, player);
             heart.reset();
+            //Reseta as gemas , a chave , e o player;
+            gem.reset();
+            key.reset();
+            player.reset();
+            // Adiciona um ou mais inimigos
+            allEnemies.push(new Enemy);
         }
     }
 
-    
+
 
     // Carregamento de tela
     function displayLevelLoading() {
@@ -286,7 +292,7 @@ var Engine = (function(global) {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "white";
-        ctx.fillRect(0, canvas.height/3, canvas.width, canvas.height/3);
+        ctx.fillRect(0, canvas.height / 3, canvas.width, canvas.height / 3);
 
         ctx.font = "60pt impact";
         ctx.textAlign = "center";
@@ -295,9 +301,9 @@ var Engine = (function(global) {
         ctx.strokeStyle = "black";
         ctx.lineWidth = 3;
 
-        var levelLine = "Level "+ game.currentLevel;
-        ctx.fillText(levelLine, canvas.width/2, canvas.height/2 + 50);
-        ctx.strokeText(levelLine, canvas.width/2, canvas.height/2 + 50);
+        var levelLine = "Level " + game.currentLevel;
+        ctx.fillText(levelLine, canvas.width / 2, canvas.height / 2 + 50);
+        ctx.strokeText(levelLine, canvas.width / 2, canvas.height / 2 + 50);
     }
 
     /* Esta função é chamada pela principal (o loop de nosso jogo), e ela
@@ -315,7 +321,7 @@ var Engine = (function(global) {
         // Verifica a colisao do jogo
         checkCollisions();
 
-        if(game.gemCount !== game.currentLevel) {
+        if (game.gemCount !== game.currentLevel) {
             if (gem.checkGet(game, player)) {
                 game.gemCount += 1;
                 setToast("+15", player.row, player.col);
@@ -338,18 +344,20 @@ var Engine = (function(global) {
         } else {
             heart.generate(game.currentLevel);
         }
- 
+
     }
 
     function checkCollisions() {
         if (game.board[player.row][player.col] === 2) {
             setToast("Ouch -30", player.row, player.col);
             game.playerDead();
+            player.reset();
         } else {
-            allEnemies.forEach(function(enemy) {
-                if(player.row === enemy.row && player.col - 0.7 < enemy.col && player.col + 0.7 > enemy.col) {
+            allEnemies.forEach(function (enemy) {
+                if (player.row === enemy.row && player.col - 0.7 < enemy.col && player.col + 0.7 > enemy.col) {
                     setToast("Ouch -30", player.row, player.col);
                     game.playerDead();
+                    player.reset();
                 }
             });
         }
@@ -362,12 +370,12 @@ var Engine = (function(global) {
      * nos métodos render.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
+        allEnemies.forEach(function (enemy) {
             enemy.update(dt);
         });
     }
 
-// Seta a mensagem para ser exibida
+    // Seta a mensagem para ser exibida
     function setToast(msg, row, col) {
         toast.msg = msg;
         toast.row = row;
@@ -391,9 +399,9 @@ var Engine = (function(global) {
      * on your enemy and player entities within app.js
      */
     function renderEntities() {
-        
-       
-        if (game.gemCount != game.currentLevel){
+
+
+        if (game.gemCount != game.currentLevel) {
             gem.render();
         } else {
             key.render();
@@ -403,12 +411,12 @@ var Engine = (function(global) {
             heart.render();
         }
 
-      
-        allEnemies.forEach(function(enemy) {
+
+        allEnemies.forEach(function (enemy) {
             enemy.render();
         });
 
-        
+
         player.render();
     }
 
@@ -417,7 +425,7 @@ var Engine = (function(global) {
         if (Date.now() - gameToastTime < 1000) {
             ctx.font = "20pt impact";
             ctx.textAlign = "center";
-            
+
             ctx.fillStyle = "red";
             ctx.strokeStyle = "black";
             ctx.lineWidth = 1;
@@ -427,7 +435,7 @@ var Engine = (function(global) {
         } else {
             game.toast = false;
         }
-    }    
+    }
 
     // Recarrega as imagens do jogo
     Resources.load([

@@ -141,14 +141,6 @@ Game.prototype.nextLevelInitiation = function () {
         this.createWater();
     }
 
-    // Adiciona um ou mais inimigos
-    allEnemies.push(new Enemy());
-
-    //Reseta as gemas , a chave , e o player;
-    gem.reset();
-    key.reset();
-    player.reset();
-
     // Upon finishing the preparation for the next level, change back this.loading to
     // false and this.toast to false.
     this.loading = false;
@@ -162,7 +154,6 @@ Game.prototype.nextLevelInitiation = function () {
 Game.prototype.playerDead = function () {
     this.life -= 1;
     this.score -= 30;
-    player.reset();
 };
 
 // GameObject Superclass that defines variables and methods that are common to all
